@@ -6,7 +6,7 @@ import plotly.express as px
 import numpy as np
 import dash_bootstrap_components as dbc
 
-app = Dash(external_stylesheets=[dbc.themes.PULSE])
+app = Dash(__name__, external_stylesheets=[dbc.themes.PULSE])
 
 df = pd.read_csv('https://git.io/manhattan_data.csv')
 df['-log10p'] = -np.log10(df['P'])
@@ -32,18 +32,19 @@ CONTENT_STYLE = {
 
 sidebar = html.Div(
     [
-        html.H2('Joseph Staniforth Dash Portfolio', className='display-4'),
+        html.H2('manhattanDash', className='display-4'),
         html.Hr(),
         html.P(
-            r'Controls for the plots and the table. Data taken from https://git.io/manhattan_data.csv', className='lead'
+            r'Controls for the plots and the table. Example data available at https://git.io/manhattan_data.csv', className='lead'
         ),
+        dcc.Upload(html.Button('Upload Data'),id = 'upload_data'),
         html.H4('Chromosome Scatter Plot'),
         dcc.Dropdown([*range(1,24,1)], 1, id='chr_drop_down',
                      style = {'display': 'inline-block', 'width': '12em'}),
         html.Br(),
         html.H4('Manhattan Plot'),
         html.Br(),
-        dcc.Slider(1, 9, 1, value = 5, id = 'p_slider'),
+        dcc.Slider(2, 8, 1, value = 5, id = 'p_slider'),
         html.H4('Table Settings'),
         dcc.RadioItems(['Display from Scatter Plot', 'Display from Manhattan Plot'], 'Display from Manhattan Plot', id='Table_Radio',
                        labelStyle={'display': 'block'}),
