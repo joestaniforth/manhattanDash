@@ -10,12 +10,14 @@ import io
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.PULSE])
 
-df = pd.read_csv('https://git.io/manhattan_data.csv')
-df['-log10p'] = -np.log10(df['P'])
+#df = pd.read_csv('https://git.io/manhattan_data.csv')
+#df['-log10p'] = -np.log10(df['P'])
 
-sub_df = df[df['CHR'] == 1]
-table_df = df[df['-log10p'] >= 5]
-drop_down_list = list(set(df['CHR'].to_list()))
+#sub_df = df[df['CHR'] == 1]
+#table_df = df[df['-log10p'] >= 5]
+#drop_down_list = list(set(df['CHR'].to_list()))
+df = None
+drop_down_list = []
 
 SIDEBAR_STYLE = {
     'position': 'fixed',
@@ -67,21 +69,11 @@ sidebar = html.Div(
 content = html.Div([
     html.Br(),
     html.Div([
-        dcc.Graph(id='partial_scatter',
-                  figure = px.scatter(sub_df, x = 'BP', y = '-log10p', color_discrete_sequence=['#20B2AA'], title = 'Chromosome 1'),
-                  style={'display': 'inline-block', 'width':'55vh'}),
-        dcc.Graph(
-            id='full_manhattan',
-            figure=dashbio.ManhattanPlot(
-                dataframe=df,
-                suggestiveline_value = False,
-                highlight_color = '#20B2AA',
-                showlegend = False,
-            showgrid = False), 
-            style={'display': 'inline-block', 'width':'83vh'})
+        dcc.Graph(id='partial_scatter', style={'display': 'inline-block', 'width':'55vh'}),
+        dcc.Graph(id='full_manhattan',style={'display': 'inline-block', 'width':'83vh'})
     ],style={'display': 'inline-block'}),
     html.Div([
-        dash_table.DataTable(table_df.to_dict('records'), id = 'data_table')
+        dash_table.DataTable(id = 'data_table')
     ])
 ], style=CONTENT_STYLE)
 
@@ -112,12 +104,21 @@ def update_manhattanplot(p_slider, contents, filename):
     Input('upload_data', 'filename'))
 
 def update_scatter_plot(chr_drop_down, contents, filename):
-    if contents:
-        df = parse_contents(contents, filename)
-        df['-log10p'] = -np.log10(df['P'])
-    df_to_plot = df[df['CHR'] == chr_drop_down]
-    fig = px.scatter(df_to_plot, x = 'BP', y = '-log10p', color_discrete_sequence=['#20B2AA'], title = f'Chromosome {chr_drop_down}')
-    return fig
+    #if contents:
+    #    df = parse_contents(contents, filename)
+    #    df['-log10p'] = -np.log10(df['P'])
+    #df_to_plot = df[df['CHR'] == chr_drop_down] #THROWING ERROR
+    #fig = px.scatter(df_to_plot, x = 'BP', y = '-log10p', color_discrete_sequence=['#20B2AA'], title = f'Chromosome {chr_drop_down}')
+    #return fig
+
+    return px.scatter(
+        data_frame = filter_df_scatter(df = import_contents(parse_contents(contents, filename)), chr_drop_down = chr_drop_down)if contents else df,
+        x = 'BP',
+        y='-log10p',
+        color_discrete_sequence=['#20B2AA'],
+        title = f'Chromosome {chr_drop_down}'
+    )
+
 
 @app.callback(
     Output('data_table', 'data'),
@@ -143,7 +144,7 @@ def update_table(p_slider, chr_drop_down, Table_Radio, contents, filename):
         table_df = df[df['CHR'] == chr_drop_down]
         return table_df.to_dict('records')
     elif Table_Radio == 'Display from Manhattan Plot':
-        table_df = df[df['-log10p'] >= p_slider]
+        table_df = df[df['-log10p'] >= p_slider] #THROWING ERROR
         return table_df.to_dict('records')
 
 def parse_contents(contents, filename):
@@ -156,9 +157,16 @@ def parse_contents(contents, filename):
         return error_modal
     return df
 
+def import_contents(df):
+    df['-log10p'] = -np.log10(df['P'])
+    return df
+
+def filter_df_scatter(df, chr_drop_down):
+    return df[df['CHR'] == chr_drop_down] 
+
 @app.callback(
     Output('chr_drop_down', 'options'),
-     Input('upload_data', 'contents'),
+    Input('upload_data', 'contents'),
     Input('upload_data', 'filename')
     )
 
@@ -168,4 +176,4 @@ def update_drop_down(contents, filename):
 
 
 #if __name__ == '__main__':
-app.run_server()
+app.run_server(debug = True)
