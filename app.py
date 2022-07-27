@@ -9,6 +9,7 @@ import base64
 import io
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.PULSE])
+server = app.server
 
 #df = pd.read_csv('https://git.io/manhattan_data.csv')
 #df['-log10p'] = -np.log10(df['P'])
